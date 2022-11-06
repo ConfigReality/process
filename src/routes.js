@@ -1,0 +1,83 @@
+'use strict'
+
+const fs = require('fs')
+const util = require('util')
+const { default: fp } = require('fastify-plugin')
+const { v4: uuidv4 } = require('uuid')
+const { pipeline } = require('stream')
+const { mkdir } = require('fs/promises')
+const { process, convert } = require('./process')
+const pump = util.promisify(pipeline)
+
+module.exports = fp(async function (fastify, opts) {
+  // Upload files to disk and work with temporary file paths
+  // As soon as the response ends all files are removed.
+  fs.mkdir('./tmp', err => {
+    if (err) {
+      if (err.code === 'EEXIST') {
+        console.log('Directory already exists')
+      } else {
+        console.log('Error creating directory')
+      }
+    } else {
+      console.log('Directory created successfully')
+    }
+  })
+
+  // Upload files to disk and work with temporary file paths
+  fastify.post('/upload-files', async function (req, reply) {
+    const files = req.files()
+    const uuid = uuidv4()
+    const dir = `./tmp/${uuid}`
+    try {
+      await mkdir(dir)
+      await mkdir(`${dir}/images`)
+      await mkdir(`${dir}/models`)
+    } catch (err) {
+      console.log('ERRRRR', err)
+    }
+    const _ = []
+    for await (const file of files) {
+      req.log.info('storing %s', file.filename)
+      const storedFile = fs.createWriteStream(`${dir}/images/${file.filename}`)
+      await pump(file.file, storedFile)
+      _.push({
+        filename: file.filename,
+        mimetype: file.mimetype,
+        fieldname: file.fieldname,
+      })
+    }
+    return { upload: 'completed', id: uuid, files: _ }
+  })
+
+  // Upload files to disk and work with temporary file paths
+  // As soon as the response ends all files are removed.
+  fastify.post('/upload-tmp-sync', async function (request) {
+    const files = await request.saveRequestFiles({
+      tmpdir: './tmp',
+    })
+    const _ = []
+    for (const f of files) {
+      _.push({
+        fieldname: f.fieldname,
+        filename: f.filename,
+        encoding: f.encoding,
+        mimetype: f.mimetype,
+        // file: f.file,
+        // fields: f.fields,
+        // _buf: f._buf,
+        // toBuffer: f.toBuffer,
+        filepath: f.filepath,
+      })
+    }
+    return { upload: 'completed', files: _ }
+  })
+  fastify.post('/process', async function (req, reply) {
+    const { id } = req.body
+    return process(id)
+  })
+  fastify.post('/convert', async function (req, reply) {
+    const { id } = req.body
+    return convert(id)
+  })
+}) // end fp

@@ -33,45 +33,47 @@ module.exports = fp(async function (fastify, opts) {
       await mkdir(dir)
       await mkdir(`${dir}/images`)
       await mkdir(`${dir}/models`)
+      const _ = []
+      for await (const file of files) {
+        req.log.info('storing %s', file.filename)
+        const storedFile = fs.createWriteStream(
+          `${dir}/images/${file.filename}`
+        )
+        await pump(file.file, storedFile)
+        _.push({
+          filename: file.filename,
+          mimetype: file.mimetype,
+          fieldname: file.fieldname,
+        })
+      }
+      console.log(`process(${uuid})`)
+      console.time('process')
+      process(uuid)
+
+      return { upload: 'completed', id: uuid, files: _ }
     } catch (err) {
       console.log('ERRRRR', err)
     }
-    const _ = []
-    for await (const file of files) {
-      req.log.info('storing %s', file.filename)
-      const storedFile = fs.createWriteStream(`${dir}/images/${file.filename}`)
-      await pump(file.file, storedFile)
-      _.push({
-        filename: file.filename,
-        mimetype: file.mimetype,
-        fieldname: file.fieldname,
-      })
-    }
-    return { upload: 'completed', id: uuid, files: _ }
   })
 
   // Upload files to disk and work with temporary file paths
   // As soon as the response ends all files are removed.
-  fastify.post('/upload-tmp-sync', async function (request) {
-    const files = await request.saveRequestFiles({
-      tmpdir: './tmp',
-    })
-    const _ = []
-    for (const f of files) {
-      _.push({
-        fieldname: f.fieldname,
-        filename: f.filename,
-        encoding: f.encoding,
-        mimetype: f.mimetype,
-        // file: f.file,
-        // fields: f.fields,
-        // _buf: f._buf,
-        // toBuffer: f.toBuffer,
-        filepath: f.filepath,
-      })
-    }
-    return { upload: 'completed', files: _ }
-  })
+  // fastify.post('/upload-tmp-sync', async function (request) {
+  //   const files = await request.saveRequestFiles({
+  //     tmpdir: './tmp',
+  //   })
+  //   const _ = []
+  //   for (const f of files) {
+  //     _.push({
+  //       fieldname: f.fieldname,
+  //       filename: f.filename,
+  //       encoding: f.encoding,
+  //       mimetype: f.mimetype,
+  //       filepath: f.filepath,
+  //     })
+  //   }
+  //   return { upload: 'completed', files: _ }
+  // })
   fastify.post('/process', async function (req, reply) {
     const { id } = req.body
     return process(id)

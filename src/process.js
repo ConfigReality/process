@@ -1,12 +1,12 @@
 'use strict'
 const { v4: uuidv4 } = require('uuid')
+const { exec } = require('child_process')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`
 
 const process = id => {
   const uuid = uuidv4()
-  const { exec } = require('child_process')
   exec(
     `cd ${libDir} && ./HelloPhotogrammetry ${tmpDir}/${id}/images/ ${tmpDir}/${id}/models/${id}.usdz`,
     error => {
@@ -26,13 +26,18 @@ const process = id => {
 }
 
 const convert = id => {
-  const { exec } = require('child_process')
   exec(`cd ${libDir} && ./usdconv ${tmpDir}/${id}/models/${id}.usdz`, error => {
     if (error) {
       console.timeEnd('convert')
       console.error(`exec error: ${error}`)
       return
     }
+    exec(`cd ${tmpDir}/${id} && rm -rf images`, error => {
+      if (error) {
+        console.error(`exec error: ${error}`)
+        return
+      }
+    })
     console.timeEnd('convert')
     console.log('CONVERTED')
   })

@@ -26,6 +26,11 @@ module.exports = fp(async function (fastify, opts) {
 
   // Upload files to disk and work with temporary file paths
   fastify.post('/upload-files', async function (req, reply) {
+    if (!req.isMultipart()) {
+      // you can use this decorator instead of checking headers
+      reply.code(400).send(new Error('Request is not multipart'))
+      return
+    }
     const files = req.files()
     const uuid = uuidv4()
     const dir = `./tmp/${uuid}`
@@ -50,9 +55,11 @@ module.exports = fp(async function (fastify, opts) {
       console.time('process')
       process(uuid)
 
-      return { upload: 'completed', id: uuid, files: _ }
+      return { upload: 'completed', id: uuid, count: _.length, files: _ }
     } catch (err) {
-      console.log('ERRRRR', err)
+      fastify.log.error(err)
+      reply.statusCode = 500
+      return { upload: 'failed', message: err.message }
     }
   })
 

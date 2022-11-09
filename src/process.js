@@ -1,6 +1,7 @@
 'use strict'
 const { v4: uuidv4 } = require('uuid')
 const { exec } = require('child_process')
+const { updateProcessing } = require('./lib/client')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`
@@ -19,6 +20,7 @@ const process = id => {
       console.timeEnd('process')
       console.log(`convert(${id})`)
       console.time('convert')
+
       convert(id)
     }
   )
@@ -38,6 +40,7 @@ const convert = id => {
         return
       }
     })
+    updateProcessing(tmpDir, id)
     console.timeEnd('convert')
     console.log('CONVERTED')
   })

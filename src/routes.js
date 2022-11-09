@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid')
 const { pipeline } = require('stream')
 const { mkdir } = require('fs/promises')
 const { process, convert } = require('./process')
+const { createProcessing } = require('./lib/client')
 const pump = util.promisify(pipeline)
 
 module.exports = fp(async function (fastify, opts) {
@@ -54,6 +55,12 @@ module.exports = fp(async function (fastify, opts) {
       console.log(`process(${uuid})`)
       console.time('process')
       process(uuid)
+
+      createProcessing(
+        uuid,
+        _.length,
+        _.map(_ => _.filename)
+      )
 
       return { upload: 'completed', id: uuid, count: _.length, files: _ }
     } catch (err) {

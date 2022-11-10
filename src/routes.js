@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid')
 const { pipeline } = require('stream')
 const { mkdir } = require('fs/promises')
 const { process, convert } = require('./process')
-const { createProcessing } = require('./lib/client')
+const { createProcessing } = require('./persist')
 const pump = util.promisify(pipeline)
 
 module.exports = fp(async function (fastify, opts) {

@@ -1,7 +1,7 @@
 'use strict'
 const { v4: uuidv4 } = require('uuid')
 const { exec } = require('child_process')
-const { updateProcessing } = require('./lib/client')
+const { updateProcessing } = require('./persist')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`

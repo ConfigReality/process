@@ -68,22 +68,6 @@ const updateItem = async (tableName, item) => {
 }
 
 /**
- * @param {string} bucket
- * @param {string} key
- * @param {any} body
- * @returns {Promise<AWS.S3.PutObjectOutput>}
- * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
- */
-// const _putObject = async (bucket, key, body) => {
-//   const params = {
-//     Bucket: bucket, // The name of the bucket. For example, 'sample_bucket_101'.
-//     Key: key, // The name of the object. For example, 'sample_upload.txt'.
-//     Body: body, // The content of the object. For example, 'Hello world!".
-//   }
-//   return s3Client.putObject(params).promise()
-// }
-
-/**
  * @param {string} id
  * @param {number} count
  * @param {Object} files { filename: string, mimetype: string, fieldname: string }
@@ -100,19 +84,6 @@ const createProcessing = (id, count, files) => {
   }
   putItem(AWS_DYNAMO_DB, _)
 }
-/*
-const _getFiles = async dir => {
-  const dirents = await readdir(dir, { withFileTypes: true })
-  const files = await Promise.all(
-    dirents.map(dirent => {
-      const res = path.resolve(dir, dirent.name)
-      // return dirent.isDirectory() ? _getFiles(res) : res
-      if (!dirent.isDirectory()) return res
-    })
-  )
-  return Array.prototype.concat(...files)
-}
-*/
 const appendUrlsS3 = async (id, string) => {
   dynamoDBClient.update(
     {
@@ -159,6 +130,8 @@ const uploadDir = function (id, s3Path, bucketName) {
   walkSync(s3Path, function (filePath, stat) {
     let bucketPath = filePath.substring(s3Path.length + 1)
     readFile(filePath).then(data => {
+      // _putObject(id, bucketName, bucketPath, data)
+      // astrarre
       let params = {
         Bucket: bucketName,
         Key: `${id}/${bucketPath}`,

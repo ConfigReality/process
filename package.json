@@ -5,13 +5,14 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "local:start": "fastify start -l info app.js",
-    "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P app.js"
+    "local:start": "fastify start -l info server.js",
+    "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fastify/aws-lambda": "^3.1.3",
     "@fastify/cors": "^8.1.1",
     "@fastify/env": "^4.1.0",
     "@fastify/multipart": "^7.3.0",

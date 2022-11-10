@@ -20,7 +20,6 @@ const process = id => {
       console.timeEnd('process')
       console.log(`convert(${id})`)
       console.time('convert')
-
       convert(id)
     }
   )

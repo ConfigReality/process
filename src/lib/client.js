@@ -96,7 +96,7 @@ const createProcessing = (id, count, files) => {
     status: 'Processing',
     startedAt: new Date().toISOString(),
     finishedAt: null,
-    urlsS3: null,
+    urlsS3: [],
   }
   putItem(AWS_DYNAMO_DB, _)
 }
@@ -113,17 +113,42 @@ const _getFiles = async dir => {
   return Array.prototype.concat(...files)
 }
 */
+const appendUrlsS3 = async (id, string) => {
+  dynamoDBClient.update(
+    {
+      TableName: AWS_DYNAMO_DB,
+      Key: { id },
 
+      UpdateExpression: 'SET #attrName = list_append(#attrName, :attrValue)',
+      ExpressionAttributeNames: {
+        '#attrName': 'urlsS3',
+      },
+      ExpressionAttributeValues: {
+        ':attrValue': [string],
+      },
+    },
+    function (err, data) {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log(data)
+      }
+    }
+  )
+}
 const uploadDir = function (id, s3Path, bucketName) {
   console.log(s3Path, bucketName)
   function walkSync(currentDirPath, callback) {
     readdir(currentDirPath).then(files => {
+      // console.log('files', files.length)
       files.forEach(function (name) {
         var filePath = path.join(currentDirPath, name)
         stat(filePath).then(_stat => {
           if (_stat.isFile()) {
+            // console.log('_stat.isFile()')
             callback(filePath, _stat)
           } else if (_stat.isDirectory()) {
+            // console.log('_stat.isDirectory()')
             walkSync(filePath, callback)
           }
         })
@@ -143,6 +168,8 @@ const uploadDir = function (id, s3Path, bucketName) {
         if (err) {
           console.log(err)
         } else {
+          const url = `https://${bucketName}.s3.amazonaws.com/${id}/${bucketPath}`
+          appendUrlsS3(id, url)
           console.log(
             'Successfully uploaded ' + bucketPath + ' to ' + bucketName
           )

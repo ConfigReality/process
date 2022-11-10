@@ -16,6 +16,7 @@
     "@fastify/env": "^4.1.0",
     "@fastify/multipart": "^7.3.0",
     "aws-sdk": "^2.1249.0",
+    "dotenv": "^16.0.3",
     "fastify": "^4.9.2",
     "fastify-plugin": "^4.3.0",
     "uuid": "^9.0.0"

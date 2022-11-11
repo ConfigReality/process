@@ -55,13 +55,12 @@ module.exports = fp(async function (fastify, opts) {
       console.log(`process(${uuid})`)
       console.time('process')
       process(uuid)
-
       createProcessing(
         uuid,
         _.length,
         _.map(_ => _.filename)
       )
-
+      reply.statusCode = 201
       return { upload: 'completed', id: uuid, count: _.length, files: _ }
     } catch (err) {
       fastify.log.error(err)
@@ -70,30 +69,13 @@ module.exports = fp(async function (fastify, opts) {
     }
   })
 
-  // Upload files to disk and work with temporary file paths
-  // As soon as the response ends all files are removed.
-  // fastify.post('/upload-tmp-sync', async function (request) {
-  //   const files = await request.saveRequestFiles({
-  //     tmpdir: './tmp',
-  //   })
-  //   const _ = []
-  //   for (const f of files) {
-  //     _.push({
-  //       fieldname: f.fieldname,
-  //       filename: f.filename,
-  //       encoding: f.encoding,
-  //       mimetype: f.mimetype,
-  //       filepath: f.filepath,
-  //     })
-  //   }
-  //   return { upload: 'completed', files: _ }
+  // Testing endpoint
+  // fastify.post('/process', async function (req, reply) {
+  //   const { id } = req.body
+  //   return process(id)
   // })
-  fastify.post('/process', async function (req, reply) {
-    const { id } = req.body
-    return process(id)
-  })
-  fastify.post('/convert', async function (req, reply) {
-    const { id } = req.body
-    return convert(id)
-  })
+  // fastify.post('/convert', async function (req, reply) {
+  //   const { id } = req.body
+  //   return convert(id)
+  // })
 }) // end fp

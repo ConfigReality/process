@@ -1,15 +1,19 @@
-const fastify = require('fastify')
-const app = require('./server')(fastify({ logger: true, port: 3000 }))
+'use strict'
 
-if (require.main !== module) {
-  // called directly i.e. "node app"
-  console.log('asdddd')
-  app.listen(3000, err => {
-    if (err) console.error(err)
-    console.log('server listening on 3000')
+module.exports = async function (fastify, opts) {
+  // multipart - opts --> https://github.com/fastify/busboy#busboy-methods
+  await fastify.register(require('@fastify/multipart'), {
+    MimeTypeArray: ['image/tiff', 'image/heic', 'text/plain'],
   })
-} else {
-  console.log('asdddd')
-  // required as a module => executed on aws lambda
-  module.exports = app
+  // cors
+  await fastify.register(require('@fastify/cors'), {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  })
+
+  fastify.get('/', async () => {
+    return { hello: 'world' }
+  })
+
+  fastify.register(require('./src/routes'))
 }

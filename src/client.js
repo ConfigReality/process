@@ -1,18 +1,35 @@
 const AWS = require('aws-sdk')
-const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = process.env
+const { createClient } = require('@supabase/supabase-js')
 
-const s3Client = new AWS.S3({
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  region: AWS_REGION,
-})
+const config = () => {
+  const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION } = process.env
+  return {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    region: AWS_REGION,
+  }
+}
 
-const dynamoDBClient = new AWS.DynamoDB.DocumentClient({
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  region: AWS_REGION,
-})
+const supabaseUrl = 'https://babbshwgaemnqpeboequ.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
 
+const s3Client = new AWS.S3(config())
+const dynamoDBClient = new AWS.DynamoDB.DocumentClient(config())
+
+// supabase
+const insertRow = async (tableName, item) => {
+  const { data, error } = await supabase
+    .from(tableName)
+    .insert(item)
+    .select()
+    .single()
+  if (error) {
+    throw error
+  }
+  return data
+}
+// aws
 const putItem = async (tableName, item) => {
   const params = {
     TableName: tableName,
@@ -21,6 +38,21 @@ const putItem = async (tableName, item) => {
   return dynamoDBClient.put(params).promise()
 }
 
+// supabase
+const updateRow = async (tableName, item) => {
+  const { id } = item
+  const { data, error } = await supabase
+    .from(tableName)
+    .update(item)
+    .eq('id', id)
+    .single()
+  if (error) {
+    throw error
+  }
+  return data
+}
+
+// aws
 const updateItem = async (tableName, item) => {
   const id = item.id
   delete item.id
@@ -47,6 +79,22 @@ const updateItem = async (tableName, item) => {
   return dynamoDBClient.update(params).promise()
 }
 
+// supabase
+const _appendItemArray = async (id, tableName, property, string) => {
+  const { data, error } = await supabase
+    .from(tableName)
+    .update({
+      [property]: `array_append(${property}, '${string}')`,
+    })
+    .eq('id', id)
+    .single()
+  if (error) {
+    throw error
+  }
+  return data
+}
+
+// aws
 const _appendItemList = async (id, tableName, property, string) => {
   dynamoDBClient.update(
     {
@@ -70,6 +118,18 @@ const _appendItemList = async (id, tableName, property, string) => {
   )
 }
 
+// supabase
+const uploadFile = async (id, bucketName, tableName, bucketPath, data) => {
+  const { error } = await supabase.storage
+    .from(bucketName)
+    .upload(`${id}/${bucketPath}`, data)
+  if (error) {
+    throw error
+  }
+  _appendItemArray(id, tableName, 'models_url', `${id}/${bucketPath}`)
+}
+
+// aws
 const putObject = async (id, bucketName, tableName, bucketPath, data) => {
   let params = {
     Bucket: bucketName,
@@ -88,7 +148,6 @@ const putObject = async (id, bucketName, tableName, bucketPath, data) => {
   })
 }
 module.exports = {
-  putItem,
-  updateItem,
-  putObject,
+  s3: { putItem, updateItem, putObject },
+  supabase: { insertRow, updateRow, uploadFile },
 }

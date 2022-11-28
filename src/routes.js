@@ -6,8 +6,7 @@ const { default: fp } = require('fastify-plugin')
 const { v4: uuidv4 } = require('uuid')
 const { pipeline } = require('stream')
 const { mkdir } = require('fs/promises')
-const { process, convert } = require('./process')
-const { createProcessing } = require('./persist')
+const { process } = require('./process')
 const pump = util.promisify(pipeline)
 
 module.exports = fp(async function (fastify, opts) {
@@ -41,7 +40,7 @@ module.exports = fp(async function (fastify, opts) {
       await mkdir(`${dir}/models`)
       const _ = []
       for await (const file of files) {
-        req.log.info('storing %s', file.filename)
+        // req.log.info('storing %s', file.filename)
         const storedFile = fs.createWriteStream(
           `${dir}/images/${file.filename}`
         )
@@ -54,14 +53,9 @@ module.exports = fp(async function (fastify, opts) {
       }
       console.log(`process(${uuid})`)
       console.time('process')
-      process(uuid)
-      createProcessing(
-        uuid,
-        _.length,
-        _.map(_ => _.filename)
-      )
+      process(uuid, _)
       reply.statusCode = 201
-      return { upload: 'completed', id: uuid, count: _.length, files: _ }
+      return { upload: 'processing', id: uuid, count: _.length, files: _ }
     } catch (err) {
       fastify.log.error(err)
       reply.statusCode = 500
@@ -74,8 +68,8 @@ module.exports = fp(async function (fastify, opts) {
   //   const { id } = req.body
   //   return process(id)
   // })
-  // fastify.post('/convert', async function (req, reply) {
+  // fastify.post(', async function (req, reply) {
   //   const { id } = req.body
-  //   return convert(id)
+  //   retur(id)
   // })
 }) // end fp

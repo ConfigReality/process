@@ -6,9 +6,28 @@ const {
   s3: { putItem, updateItem, putObject },
   supabase: { insertRow, updateRow, uploadFile },
 } = require('./client')
+const { walkSync, generate } = require('./utils')
 const { AWS_S3_BUCKET, AWS_DYNAMO_DB } = process.env
 
-const createProcessing = async (id, count, files) => {
+const _uploadDir = function ({ id, tableId, dirpath, s3, supabase }) {
+  walkSync(dirpath, function (filePath, stat) {
+    let bucketPath = filePath.substring(dirpath.length + 1)
+    readFile(filePath).then(data => {
+      console.log('uploadFile', bucketPath)
+      s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+      supabase &&
+        uploadFile(tableId, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+    })
+  })
+}
+
+const createProcessing = async ({
+  id,
+  count,
+  files,
+  supabase = false,
+  s3 = false,
+}) => {
   const _ = {
     id,
     uuid: id,
@@ -30,51 +49,29 @@ const createProcessing = async (id, count, files) => {
   return await insertRow(AWS_DYNAMO_DB, _)
 }
 
-const _uploadDir = function (id, tableId, s3Path, bucketName, tableName) {
-  // console.log(s3Path, bucketName)
-  function walkSync(currentDirPath, callback) {
-    readdir(currentDirPath).then(files => {
-      // console.log('files', files.length)
-      files.forEach(function (name) {
-        var filePath = path.join(currentDirPath, name)
-        stat(filePath).then(_stat => {
-          if (_stat.isFile()) {
-            // console.log('_stat.isFile()')
-            callback(filePath, _stat)
-          } else if (_stat.isDirectory()) {
-            // console.log('_stat.isDirectory()')
-            walkSync(filePath, callback)
-          }
-        })
-      })
-    })
-  }
-
-  walkSync(s3Path, function (filePath, stat) {
-    let bucketPath = filePath.substring(s3Path.length + 1)
-    readFile(filePath).then(data => {
-      // _putObject(id, bucketName, bucketPath, data)
-      putObject(id, bucketName, tableName, bucketPath, data)
-      uploadFile(tableId, bucketName, tableName, bucketPath, data)
-    })
-  })
-}
-
-const updateProcessing = (tmpDir, id, tableId) => {
+const updateProcessing = ({
+  tmpDir,
+  id,
+  tableId,
+  supabase = false,
+  s3 = false,
+}) => {
   // 1. update dynamoDB
   const _ = {
     id: id,
     status: 'Processed',
     finishedAt: new Date().toISOString(),
   }
-  updateItem(AWS_DYNAMO_DB, _)
-  _.id = tableId
-  _.finished_at = _.finishedAt
-  delete _.finishedAt
-  updateRow(AWS_DYNAMO_DB, _)
+  s3 && updateItem(AWS_DYNAMO_DB, _)
+  if (supabase) {
+    _.id = tableId
+    _.finished_at = _.finishedAt
+    delete _.finishedAt
+    updateRow(AWS_DYNAMO_DB, _)
+  }
   // 2. retrieve and upload files to s3
-  const dir = `${tmpDir}/${id}/models`
-  _uploadDir(id, tableId, dir, AWS_S3_BUCKET, AWS_DYNAMO_DB)
+  const dirpath = `${tmpDir}/${id}/models`
+  _uploadDir({ id, tableId, dirpath, s3, supabase })
 }
 
 module.exports = { createProcessing, updateProcessing }

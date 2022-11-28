@@ -64,7 +64,7 @@ const updateItem = async (tableName, item) => {
     ExpressionAttributeNames['#' + property] = property
     ExpressionAttributeValues[':' + property] = item[property]
   }
-  console.log(ExpressionAttributeNames)
+  // console.log(ExpressionAttributeNames)
   updateExpression = updateExpression.slice(0, -1)
   const params = {
     TableName: tableName,
@@ -83,15 +83,23 @@ const updateItem = async (tableName, item) => {
 const _appendItemArray = async (id, tableName, property, string) => {
   const { data, error } = await supabase
     .from(tableName)
-    .update({
-      [property]: `array_append(${property}, '${string}')`,
-    })
+    .select(property)
     .eq('id', id)
     .single()
   if (error) {
     throw error
   }
-  return data
+  const { data: d, error: e } = await supabase
+    .from(tableName)
+    .update({
+      [property]: [...data[property], string],
+    })
+    .eq('id', id)
+    .single()
+  if (e) {
+    throw e
+  }
+  return d
 }
 
 // aws
@@ -111,9 +119,10 @@ const _appendItemList = async (id, tableName, property, string) => {
     function (err, data) {
       if (err) {
         console.log(err)
-      } else {
-        console.log(data)
       }
+      // else {
+      //   console.log(data)
+      // }
     }
   )
 }
@@ -143,7 +152,7 @@ const putObject = async (id, bucketName, tableName, bucketPath, data) => {
       const url = `https://${bucketName}.s3.amazonaws.com/${id}/${bucketPath}`
       // console.log(id, bucketName, 'urlsS3', url)
       _appendItemList(id, tableName, 'urlsS3', url)
-      console.log('Successfully uploaded ' + bucketPath + ' to ' + bucketName)
+      // console.log('Successfully uploaded ' + bucketPath + ' to ' + bucketName)
     }
   })
 }

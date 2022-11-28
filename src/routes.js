@@ -53,7 +53,7 @@ module.exports = fp(async function (fastify, opts) {
       }
       console.log(`process(${uuid})`)
       console.time('process')
-      process(uuid, _)
+      process(uuid, _) // process asynchronously
       reply.statusCode = 201
       return { upload: 'processing', id: uuid, count: _.length, files: _ }
     } catch (err) {
@@ -62,14 +62,4 @@ module.exports = fp(async function (fastify, opts) {
       return { upload: 'failed', message: err.message }
     }
   })
-
-  // Testing endpoint
-  // fastify.post('/process', async function (req, reply) {
-  //   const { id } = req.body
-  //   return process(id)
-  // })
-  // fastify.post(', async function (req, reply) {
-  //   const { id } = req.body
-  //   retur(id)
-  // })
 }) // end fp

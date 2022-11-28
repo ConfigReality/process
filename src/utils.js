@@ -1,7 +1,7 @@
 const { readdir, stat, readFile } = require('fs/promises')
 const path = require('path')
 
-const walkSync = async (currentDirPath, callback) => {
+const walkSync = (currentDirPath, callback) => {
   readdir(currentDirPath).then(files => {
     files.forEach(function (name) {
       var filePath = path.join(currentDirPath, name)
@@ -14,6 +14,22 @@ const walkSync = async (currentDirPath, callback) => {
       })
     })
   })
+}
+
+const walk = async (currentDirPath, callback) => {
+  const ret = []
+  const files = await readdir(currentDirPath)
+  for await (const file of files) {
+    const filepath = path.join(currentDirPath, file)
+    const _stat = await stat(filepath)
+    if (_stat.isFile())
+      ret.push({
+        file: readFile(filepath),
+        path: filepath.substring(currentDirPath.length + 1),
+      })
+    else if (_stat.isDirectory()) ret.push(...(await walk(filepath, callback)))
+  }
+  return ret
 }
 
 // function to return a list of files in a directory recursively in a synchronous fashion
@@ -32,5 +48,5 @@ const generate = async function (dir) {
 
 module.exports = {
   walkSync,
-  generate, // unused
+  walk, // unused
 }

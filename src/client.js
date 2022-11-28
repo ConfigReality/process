@@ -135,7 +135,11 @@ const uploadFile = async (id, bucketName, tableName, bucketPath, data) => {
   if (error) {
     throw error
   }
-  _appendItemArray(id, tableName, 'models_url', `${id}/${bucketPath}`)
+  const { data: d } = await supabase.storage
+    .from(bucketName)
+    .getPublicUrl(`${id}/${bucketPath}`)
+
+  _appendItemArray(id, tableName, 'models_url', d.publicUrl)
 }
 
 // aws

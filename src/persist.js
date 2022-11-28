@@ -6,17 +6,29 @@ const {
   s3: { putItem, updateItem, putObject },
   supabase: { insertRow, updateRow, uploadFile },
 } = require('./client')
-const { walkSync, generate } = require('./utils')
+const { walkSync, generate, walk } = require('./utils')
 const { AWS_S3_BUCKET, AWS_DYNAMO_DB } = process.env
 
 const _uploadDir = function ({ id, tableId, dirpath, s3, supabase }) {
-  walkSync(dirpath, function (filePath, stat) {
-    let bucketPath = filePath.substring(dirpath.length + 1)
-    readFile(filePath).then(data => {
-      console.log('uploadFile', bucketPath)
-      s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
-      supabase &&
-        uploadFile(tableId, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+  // console.log('uploading dir', dirpath)
+  // walkSync(dirpath, async (filePath, stat) => {
+  //   console.log('Uploading file:', filePath)
+  //   let bucketPath = filePath.substring(dirpath.length + 1)
+  //   const data = await readFile(filePath)
+  //   s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+  //   if (supabase)
+  //     await uploadFile(tableId, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+  //   console.log('Uploaded file:', bucketPath)
+  // })
+  walk(dirpath).then(async files => {
+    console.log('Uploading files:', files.length)
+    Promise.all(files).then(async files => {
+      files.forEach(async ({ file, path }, i) => {
+        s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, path, file)
+        if (supabase)
+          await uploadFile(tableId, AWS_S3_BUCKET, AWS_DYNAMO_DB, path, file)
+        console.log('Uploaded file:', path)
+      })
     })
   })
 }
@@ -38,15 +50,17 @@ const createProcessing = async ({
     finishedAt: null,
     urlsS3: [],
   }
-  putItem(AWS_DYNAMO_DB, _)
-  delete _.id
-  _.finished_at = _.finishedAt
-  delete _.finishedAt
-  _.started_at = _.startedAt
-  delete _.startedAt
-  _.models_url = _.urlsS3
-  delete _.urlsS3
-  return await insertRow(AWS_DYNAMO_DB, _)
+  s3 && putItem(AWS_DYNAMO_DB, _)
+  if (supabase) {
+    delete _.id
+    _['finished_at'] = _.finishedAt
+    delete _.finishedAt
+    _['started_at'] = _.startedAt
+    delete _.startedAt
+    _['models_url'] = _.urlsS3
+    delete _.urlsS3
+    return insertRow(AWS_DYNAMO_DB, _)
+  }
 }
 
 const updateProcessing = ({

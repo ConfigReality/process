@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "local:start": "fastify start -l info app.js",
-    "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P app.js"
+    "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P app.js --port 3001"
   },
   "keywords": [],
   "author": "",

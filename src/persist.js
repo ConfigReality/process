@@ -23,12 +23,20 @@ const _uploadDir = function ({ id, tableId, dirpath, s3, supabase }) {
   walk(dirpath).then(async files => {
     console.log('Uploading files:', files.length)
     Promise.all(files).then(async files => {
-      files.forEach(async ({ file, path }, i) => {
-        s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, path, file)
+      // files.forEach(async ({ file, path }, i) => {
+      for await (const { file, path } of files) {
+        console.log('Uploading file:')
+        s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, path, await file)
         if (supabase)
-          await uploadFile(tableId, AWS_S3_BUCKET, AWS_DYNAMO_DB, path, file)
+          await uploadFile(
+            tableId,
+            AWS_S3_BUCKET,
+            AWS_DYNAMO_DB,
+            path,
+            await file
+          )
         console.log('Uploaded file:', path)
-      })
+      }
     })
   })
 }

@@ -47,6 +47,7 @@ const createProcessing = async ({
   files,
   supabase = false,
   s3 = false,
+  userId,
 }) => {
   const _ = {
     id,
@@ -57,6 +58,7 @@ const createProcessing = async ({
     startedAt: new Date().toISOString(),
     finishedAt: null,
     urlsS3: [],
+    userId,
   }
   s3 && putItem(AWS_DYNAMO_DB, _)
   if (supabase) {

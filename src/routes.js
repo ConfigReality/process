@@ -31,7 +31,8 @@ module.exports = fp(async function (fastify, opts) {
       reply.code(400).send(new Error('Request is not multipart'))
       return
     }
-    const files = req.files()
+    const { u: userId } = req.headers
+    const files = await req.files()
     const uuid = uuidv4()
     const dir = `./tmp/${uuid}`
     try {
@@ -51,9 +52,13 @@ module.exports = fp(async function (fastify, opts) {
           fieldname: file.fieldname,
         })
       }
+      if (_.length === 0) {
+        reply.statusCode = 400
+        return { upload: 'failed', message: 'No files uploaded' }
+      }
       console.log(`process(${uuid})`)
       console.time('process')
-      process(uuid, _) // process asynchronously
+      process({ id: uuid, files: _, userId }) // process asynchronously
       reply.statusCode = 201
       return { upload: 'processing', id: uuid, count: _.length, files: _ }
     } catch (err) {

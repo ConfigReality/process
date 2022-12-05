@@ -5,12 +5,13 @@ const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`
 
-const process = (id, files) => {
+const process = ({ id, files, userId }) => {
   createProcessing({
     id,
     count: files.length,
     files: files.map(_ => _.filename),
     supabase: true,
+    userId,
   }).then(a => {
     const tableId = a.id
     exec(
@@ -25,13 +26,13 @@ const process = (id, files) => {
         console.timeEnd('process')
         // console.log(`convert(${id})`)
         console.time('convert')
-        convert(id, tableId)
+        convert({ id, tableId })
       }
     )
   })
 }
 
-const convert = (id, tableId) => {
+const convert = ({ id, tableId }) => {
   exec(`cd ${libDir} && ./usdconv ${tmpDir}/${id}/models/${id}.usdz`, error => {
     if (error) {
       console.timeEnd('convert')

@@ -4,7 +4,7 @@ const { updateProcessing, createProcessing } = require('./persist')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`
-
+console.log('libDir', libDir)
 const process = ({ id, files, userId }) => {
   createProcessing({
     id,

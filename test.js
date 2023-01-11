@@ -32,120 +32,44 @@ const tmpDir = `${dir}/tmp`
 const imgDir = '/Users/salvatorelaspata/3DObject/francesco/'
 
 // create all combination of detail, order, feature
-for (const key in details) {
-  if (Object.hasOwnProperty.call(details, key)) {
-    const i = details[key]
-    // order = sequential and feature = normal
-    var d = new Date()
-    console.log(
-      'exec_sequential_normal',
-      d.getHours(),
-      d.getMinutes(),
-      d.getSeconds()
-    )
-    exec(
-      `cd ${libDir} && ./HelloPhotogrammetry ${imgDir}/ ${tmpDir}/test/models/test${`_${
-        i.split(' ')[1]
-      }_`}${`_${orders.sequential.split(' ')[1]}_`}${`_${
-        features.normal.split(' ')[1]
-      }`}.usdz ${i} ${orders.sequential} ${features.normal}`,
-      error => {
-        const d = new Date()
-        console.log(
-          'exec_sequential_normal',
-          d.getHours(),
-          d.getMinutes(),
-          d.getSeconds()
-        )
-        if (error) {
-          console.error(`exec error: ${error}`)
-          return
+const createCombination = function* (_details, _orders, _features) {
+  for (const key in _details) {
+    if (Object.hasOwnProperty.call(_details, key)) {
+      const detail = _details[key]
+      for (const key in _orders) {
+        if (Object.hasOwnProperty.call(_orders, key)) {
+          const order = _orders[key]
+          for (const key in _features) {
+            if (Object.hasOwnProperty.call(_features, key)) {
+              const feature = _features[key]
+              yield new Promise((res, rej) =>
+                exec(
+                  `cd ${libDir} && ./HelloPhotogrammetry ${imgDir}/ ${tmpDir}/test/models/test2${`_${
+                    detail.split(' ')[1]
+                  }_`}${`_${order.split(' ')[1]}_`}${`_${
+                    feature.split(' ')[1]
+                  }`}.usdz ${detail} ${order} ${feature}`,
+                  error => {
+                    if (error) {
+                      console.error(`exec error: ${error}`)
+                      rej(error)
+                      return
+                    }
+                    res('ok')
+                  }
+                )
+              )
+            }
+          }
         }
       }
-    )
-    // order = unordered and feature = normal
-    d = new Date()
-    console.log(
-      'exec_unordered_normal',
-      d.getHours(),
-      d.getMinutes(),
-      d.getSeconds()
-    )
-    exec(
-      `cd ${libDir} && ./HelloPhotogrammetry ${imgDir}/ ${tmpDir}/test/models/test${`_${
-        i.split(' ')[1]
-      }_`}${`_${orders.unordered.split(' ')[1]}_`}${`_${
-        features.normal.split(' ')[1]
-      }`}.usdz ${i} ${orders.unordered} ${features.normal}`,
-      error => {
-        const d = new Date()
-        console.log(
-          'exec_unordered_normal',
-          d.getHours(),
-          d.getMinutes(),
-          d.getSeconds()
-        )
-        if (error) {
-          console.error(`exec error: ${error}`)
-          return
-        }
-      }
-    )
-    // order = sequential and feature = high
-    d = new Date()
-    console.log(
-      'exec_sequential_high',
-      d.getHours(),
-      d.getMinutes(),
-      d.getSeconds()
-    )
-    exec(
-      `cd ${libDir} && ./HelloPhotogrammetry ${imgDir}/ ${tmpDir}/test/models/test${`_${
-        i.split(' ')[1]
-      }_`}${`_${orders.sequential.split(' ')[1]}_`}${`_${
-        features.high.split(' ')[1]
-      }`}.usdz ${i} ${orders.sequential} ${features.high}`,
-      error => {
-        const d = new Date()
-        console.log(
-          'exec_sequential_high',
-          d.getHours(),
-          d.getMinutes(),
-          d.getSeconds()
-        )
-        if (error) {
-          console.error(`exec error: ${error}`)
-          return
-        }
-      }
-    )
-    // order = unordered and feature = high
-    d = new Date()
-    console.log(
-      'exec_unordered_high',
-      d.getHours(),
-      d.getMinutes(),
-      d.getSeconds()
-    )
-    exec(
-      `cd ${libDir} && ./HelloPhotogrammetry ${imgDir}/ ${tmpDir}/test/models/test${`_${
-        i.split(' ')[1]
-      }_`}${`_${orders.unordered.split(' ')[1]}_`}${`_${
-        features.high.split(' ')[1]
-      }`}.usdz ${i} ${orders.unordered} ${features.high}`,
-      error => {
-        const d = new Date()
-        console.log(
-          'exec_unordered_high',
-          d.getHours(),
-          d.getMinutes(),
-          d.getSeconds()
-        )
-        if (error) {
-          console.error(`exec error: ${error}`)
-          return
-        }
-      }
-    )
+    }
   }
 }
+
+;(async function () {
+  const unorderedOnly = (({ unordered }) => ({ unordered }))(orders)
+  for await (const log of createCombination(details, unorderedOnly, features)) {
+    console.log(log)
+  }
+})()

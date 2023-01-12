@@ -54,3 +54,28 @@ Resources [lib]:
 
 - https://developer.apple.com/documentation/realitykit/creating_a_photogrammetry_command-line_app
 - https://github.com/SamusAranX/USDConverter
+
+HelloPhotogrammetry parameters
+
+```js
+// "-d","medium", // -d specifies the detail
+const details = proxy('-d', {
+  preview: 'preview',
+  reduced: 'reduced',
+  medium: 'medium',
+  full: 'full',
+  raw: 'raw',
+})
+
+// "-o","unordered", // -o specifies the sample ordering
+const orders = proxy('-o', {
+  unordered: 'unordered',
+  sequential: 'sequential',
+})
+
+// "-f","normal" // -f specifies the feature sensitivity
+const features = proxy('-f', {
+  normal: 'normal',
+  high: 'high',
+})
+```

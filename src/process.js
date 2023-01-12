@@ -1,11 +1,14 @@
 'use strict'
+
 const { exec } = require('child_process')
 const { updateProcessing, createProcessing } = require('./persist')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`
 console.log('libDir', libDir)
+// funzione che inizializza il processo di creazione del modello 3D
 const process = ({ id, files, userId }) => {
+  // inserisce nella tabella processing l'id del processo e i file che lo compongono (filename)
   createProcessing({
     id,
     count: files.length,
@@ -14,6 +17,7 @@ const process = ({ id, files, userId }) => {
     userId,
   }).then(a => {
     const tableId = a.id
+    // esecuzione del processo di creazione del modello 3D
     exec(
       `cd ${libDir} && ./HelloPhotogrammetry ${tmpDir}/${id}/images/ ${tmpDir}/${id}/models/${id}.usdz`,
       error => {
@@ -26,6 +30,7 @@ const process = ({ id, files, userId }) => {
         console.timeEnd('process')
         // console.log(`convert(${id})`)
         console.time('convert')
+        // convesione del modello 3D in formato usdz in formato obj e mtl e esportazione mesh
         convert({ id, tableId })
       }
     )

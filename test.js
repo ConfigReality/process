@@ -4,6 +4,7 @@ const proxy = (param, obj) =>
       return `${param} ${target[prop]}`
     },
   })
+
 // "-d","medium", // -d specifies the detail
 const details = proxy('-d', {
   preview: 'preview',
@@ -30,6 +31,27 @@ const dir = __dirname
 const libDir = `${dir}/src/lib`
 const tmpDir = `${dir}/tmp`
 const imgDir = '/Users/salvatorelaspata/3DObject/francesco/'
+
+const c = (...args) => {
+  const [first, ...rest] = args
+  if (rest.length === 0) {
+    return Object.values(first)
+  } else {
+    return Object.values(first).reduce((acc, element) => {
+      return acc.concat(
+        c(...rest).map(combination => `${element} ${combination}`)
+      )
+    }, [])
+  }
+}
+
+const combinazioni = {
+  details,
+  orders,
+  features,
+}
+
+console.log(c(combinazioni.details, combinazioni.orders, combinazioni.features))
 
 // create all combination of detail, order, feature
 const createCombination = function* (_details, _orders, _features) {

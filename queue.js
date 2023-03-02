@@ -1,59 +1,53 @@
 const async = require('async')
 const { spawn } = require('child_process')
 
-// Coda dei processi
-const queue = async.queue((task, callback) => {
-  console.log(`Esecuzione del comando: ${task.command}`)
-  const childProcess = spawn(task.command, task.args)
+// In questo esempio, abbiamo creato una classe CommandQueue con un costruttore che accetta una configurazione del pool di connessioni e una dimensione di concorrenza. Abbiamo quindi definito i metodi addTask e processTask che corrispondono alla funzione addProcessToQueue e al callback della coda, rispettivamente.
+// Nel costruttore della classe, abbiamo creato un nuovo pool di connessioni utilizzando la configurazione fornita. Abbiamo anche creato una nuova coda utilizzando il modulo async e la funzione processTask come callback.
+// Il metodo addTask è simile alla funzione addProcessToQueue, tranne che utilizziamo this.queue invece di queue per accedere alla coda della classe.
+// Il metodo processTask è stato modificato in modo da utilizzare this.pool invece di pool per accedere al pool di connessioni della classe.
+// Infine, abbiamo creato un'istanza della classe CommandQueue e abbiamo aggiunto due task alla coda utilizzando il metodo addTask.
 
-  // Gestione degli eventi del processo
-  childProcess.stdout.on('data', data => {
-    console.log(`stdout: ${data}`)
-  })
+class CommandQueue {
+  // constructor
+  // concurrency: numero di task che possono essere eseguiti in parallelo
+  // callback: funzione che viene eseguita quando il task è completato
+  constructor(concurrency, callback) {
+    this.queue = async.queue(this.processTask.bind(this), concurrency)
+    this.callback = callback
+  }
 
-  childProcess.stderr.on('data', data => {
-    console.error(`stderr: ${data}`)
-  })
+  // add task to queue
+  addTask(command, args) {
+    this.queue.push({ command, args })
+  }
 
-  childProcess.on('close', code => {
-    console.log(`Il comando è terminato con il codice di uscita ${code}`)
-    // Aggiorniamo lo stato del processo nel database
-    // pool.query(
-    //   "UPDATE queue SET status = 'completed' WHERE id = $1",
-    //   [task.id],
-    //   (error, result) => {
-    //     if (error) console.error(error);
-    //     else console.log(`Processo "${task.command}" completato.`);
-    //     callback();
-    //   }
-    // );
-    callback()
-  })
-}, 1) // Impostiamo un limite di 1 processo alla volta
+  // process task
+  processTask(task) {
+    const { command, args } = task
+    const child = spawn(command, args)
+    // manage state of child process
+    child.on('error', error => {
+      console.error(`child process error: ${error}`)
+      this.callback({ error })
+    })
 
-// Funzione per aggiungere un nuovo processo alla coda
-const addProcessToQueue = (command, args) => {
-  // pool.query(
-  //   "INSERT INTO queue (command, args, status) VALUES ($1, $2, $3) RETURNING id",
-  //   [command, args, "pending"],
-  //   (error, result) => {
-  //     if (error) console.error(error);
-  //     else {
-  //       const id = result.rows[0].id;
-  queue.push({ command, args }, error => {
-    if (error) console.error(error)
-    else console.log(`Processo "${command}" completato.`)
-  })
-  //     }
-  //   }
-  // );
+    child.stdout.on('data', data => {
+      console.log(`stdout: ${data}`)
+    })
+
+    child.on('close', code => {
+      if (code !== 0) {
+        console.error(`child process exited with code ${code}`)
+      }
+      this.callback('done!')
+    })
+  }
 }
 
 // Esempio di utilizzo
-addProcessToQueue('ls', ['-l', '/'])
-addProcessToQueue('echo', ['Hello', 'World'])
-// In questo esempio, abbiamo creato una coda utilizzando la funzione async.queue. La coda è stata impostata in modo che possa eseguire un solo processo alla volta, in modo sequenziale.
-// Abbiamo quindi creato una funzione addProcessToQueue che aggiunge un nuovo processo alla coda. La funzione prende il comando da eseguire come primo argomento e un array di argomenti come secondo argomento. Questa funzione utilizza il metodo queue.push per aggiungere un nuovo processo alla coda.
-// Per gestire gli eventi del processo, abbiamo utilizzato i metodi childProcess.stdout.on, childProcess.stderr.on e childProcess.on. Questi metodi ci consentono di gestire la standard output e error del processo e di sapere quando il processo è terminato.
-// Infine, abbiamo eseguito un paio di esempi di utilizzo della funzione addProcessToQueue, passando i comandi ls e echo come esempio. Quando i processi sono completati, la funzione di callback viene chiamata con un eventuale errore e viene mostrato un messaggio a console per notificare che il processo è stato completato.
-// In questo modo, quando si aggiunge un nuovo processo alla coda, questo viene eseguito in modo sequenziale, uno dopo l'altro. Se altri processi vengono aggiunti alla coda durante l'esecuzione di un processo, questi vengono cumulati e eseguiti quando il processo corrente è completato.
+const commandQueue = new CommandQueue(1, a => console.log(a))
+
+commandQueue.addTask('ls', ['-l', '/'])
+commandQueue.addTask('ls', ['-l', '/usr'])
+
+module.exports = CommandQueue

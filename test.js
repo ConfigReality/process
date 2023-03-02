@@ -1,3 +1,6 @@
+const { exec } = require('child_process')
+const CommandQueue = require('./queue')
+
 const proxy = (param, obj) =>
   new Proxy(obj, {
     get: function (target, prop) {
@@ -26,7 +29,6 @@ const features = proxy('-f', {
   high: 'high',
 })
 
-const { exec } = require('child_process')
 const dir = __dirname
 const libDir = `${dir}/src/lib`
 const tmpDir = `${dir}/tmp`
@@ -45,13 +47,13 @@ const c = (...args) => {
   }
 }
 
-const combinazioni = {
-  details,
-  orders,
-  features,
-}
+// const combinazioni = {
+//   details,
+//   orders,
+//   features,
+// }
 
-console.log(c(combinazioni.details, combinazioni.orders, combinazioni.features))
+// console.log(c(combinazioni.details, combinazioni.orders, combinazioni.features))
 
 // create all combination of detail, order, feature
 const createCombination = function* (_details, _orders, _features) {
@@ -89,9 +91,41 @@ const createCombination = function* (_details, _orders, _features) {
   }
 }
 
-;(async function () {
-  const unorderedOnly = (({ unordered }) => ({ unordered }))(orders)
-  for await (const log of createCombination(details, unorderedOnly, features)) {
-    console.log(log)
+// ;(async function () {
+//   const unorderedOnly = (({ unordered }) => ({ unordered }))(orders)
+//   for await (const log of createCombination(details, unorderedOnly, features)) {
+//     console.log(log)
+//   }
+// })()
+
+const createCombinationQueue = function (_details, _orders, _features) {
+  const queue = new CommandQueue(1)
+  for (const key in _details) {
+    if (Object.hasOwnProperty.call(_details, key)) {
+      const detail = _details[key]
+      for (const key in _orders) {
+        if (Object.hasOwnProperty.call(_orders, key)) {
+          const order = _orders[key]
+          for (const key in _features) {
+            if (Object.hasOwnProperty.call(_features, key)) {
+              const feature = _features[key]
+              // add to queue
+              queue.addTask(`.${libDir}/HelloPhotogrammetry`, [
+                `${imgDir}`,
+                `${tmpDir}/test/models/test2${`_${detail.split(' ')[1]}_`}${`_${
+                  order.split(' ')[1]
+                }_`}${`_${feature.split(' ')[1]}`}.usdz`,
+                ...detail.split(' '),
+                ...order.split(' '),
+                ...feature.split(' '),
+              ])
+            }
+          }
+        }
+      }
+    }
   }
-})()
+}
+
+const unorderedOnly = (({ unordered }) => ({ unordered }))(orders)
+createCombinationQueue(details, unorderedOnly, features)

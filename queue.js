@@ -1,53 +1,44 @@
-const async = require('async')
-const { spawn } = require('child_process')
-
-// In questo esempio, abbiamo creato una classe CommandQueue con un costruttore che accetta una configurazione del pool di connessioni e una dimensione di concorrenza. Abbiamo quindi definito i metodi addTask e processTask che corrispondono alla funzione addProcessToQueue e al callback della coda, rispettivamente.
-// Nel costruttore della classe, abbiamo creato un nuovo pool di connessioni utilizzando la configurazione fornita. Abbiamo anche creato una nuova coda utilizzando il modulo async e la funzione processTask come callback.
-// Il metodo addTask è simile alla funzione addProcessToQueue, tranne che utilizziamo this.queue invece di queue per accedere alla coda della classe.
-// Il metodo processTask è stato modificato in modo da utilizzare this.pool invece di pool per accedere al pool di connessioni della classe.
-// Infine, abbiamo creato un'istanza della classe CommandQueue e abbiamo aggiunto due task alla coda utilizzando il metodo addTask.
-
-class CommandQueue {
-  // constructor
-  // concurrency: numero di task che possono essere eseguiti in parallelo
-  // callback: funzione che viene eseguita quando il task è completato
-  constructor(concurrency, callback) {
-    this.queue = async.queue(this.processTask.bind(this), concurrency)
-    this.callback = callback
+class ProcessQueue {
+  constructor() {
+    this.queue = []
+    this.busy = false
+    this.eventEmitter = new (require('events'))()
+    this.eventEmitter.on('jobAdded', this.processQueue.bind(this))
   }
 
-  // add task to queue
-  addTask(command, args) {
-    this.queue.push({ command, args })
+  async processJob(job) {
+    console.log(`Processing job ${job.id}...`)
+    await new Promise(resolve => setTimeout(resolve, 5000))
+    console.log(`Job ${job.id} processed.`)
   }
 
-  // process task
-  processTask(task) {
-    const { command, args } = task
-    const child = spawn(command, args)
-    // manage state of child process
-    child.on('error', error => {
-      console.error(`child process error: ${error}`)
-      this.callback({ error })
-    })
+  async processQueue() {
+    if (this.busy || this.queue.length === 0) return
+    this.busy = true
+    const job = this.queue.shift()
+    await this.processJob(job)
+    this.busy = false
+    this.eventEmitter.emit('jobAdded')
+  }
 
-    child.stdout.on('data', data => {
-      console.log(`stdout: ${data}`)
-    })
-
-    child.on('close', code => {
-      if (code !== 0) {
-        console.error(`child process exited with code ${code}`)
-      }
-      this.callback('done!')
-    })
+  async addJob(job) {
+    console.log('Adding job to queue...')
+    this.queue.push(job)
+    this.eventEmitter.emit('jobAdded')
+    console.log('Job added to queue.')
   }
 }
 
-// Esempio di utilizzo
-const commandQueue = new CommandQueue(1, a => console.log(a))
+module.exports = ProcessQueue
 
-commandQueue.addTask('ls', ['-l', '/'])
-commandQueue.addTask('ls', ['-l', '/usr'])
+// how to call this class
+const queue = new ProcessQueue()
 
-module.exports = CommandQueue
+queue.addJob({ id: 1 })
+queue.addJob({ id: 2 })
+queue.addJob({ id: 3 })
+queue.addJob({ id: 4 })
+queue.addJob({ id: 5 })
+queue.addJob({ id: 6 })
+queue.addJob({ id: 7 })
+queue.addJob({ id: 8 })

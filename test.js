@@ -99,7 +99,9 @@ const createCombination = function* (_details, _orders, _features) {
 // })()
 
 const createCombinationQueue = function (_details, _orders, _features) {
-  const queue = new CommandQueue(1)
+  const queue = new CommandQueue(1, a => {
+    console.log('done', a)
+  })
   for (const key in _details) {
     if (Object.hasOwnProperty.call(_details, key)) {
       const detail = _details[key]
@@ -110,7 +112,7 @@ const createCombinationQueue = function (_details, _orders, _features) {
             if (Object.hasOwnProperty.call(_features, key)) {
               const feature = _features[key]
               // add to queue
-              queue.addTask(`.${libDir}/HelloPhotogrammetry`, [
+              queue.addTask(`${libDir}/HelloPhotogrammetry`, [
                 `${imgDir}`,
                 `${tmpDir}/test/models/test2${`_${detail.split(' ')[1]}_`}${`_${
                   order.split(' ')[1]

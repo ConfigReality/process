@@ -10,8 +10,7 @@ const { process } = require('./process')
 const pump = util.promisify(pipeline)
 
 module.exports = fp(async function (fastify, opts) {
-  // Upload files to disk and work with temporary file paths
-  // As soon as the response ends all files are removed.
+  // create a temporary directory for uploads id it doesn't exist
   fs.mkdir('./tmp', err => {
     if (err) {
       if (err.code === 'EEXIST') {
@@ -24,24 +23,28 @@ module.exports = fp(async function (fastify, opts) {
     }
   })
 
-  // Upload files to disk and work with temporary file paths
+  // main route
   fastify.post('/upload-files', async function (req, reply) {
+    // check if request is multipart
     if (!req.isMultipart()) {
-      // you can use this decorator instead of checking headers
       reply.code(400).send(new Error('Request is not multipart'))
       return
     }
+    // get user id from request headers
     const { u: userId } = req.headers
+    // get files from request
     const files = await req.files()
+    // generate a unique id for this upload for each session
     const uuid = uuidv4()
+    // create a temporary directory for this upload
     const dir = `./tmp/${uuid}`
     try {
+      // create the
       await mkdir(dir)
-      await mkdir(`${dir}/images`)
-      await mkdir(`${dir}/models`)
+      await Promise.all([mkdir(`${dir}/images`), mkdir(`${dir}/models`)])
       const _ = []
+      // read each file from the generators and store it in the temporary directory
       for await (const file of files) {
-        // req.log.info('storing %s', file.filename)
         const storedFile = fs.createWriteStream(
           `${dir}/images/${file.filename}`
         )

@@ -9,14 +9,10 @@ const libDir = `${dir}/src/lib`
 console.log('libDir', libDir)
 // funzione che inizializza il processo di creazione del modello 3D
 const process = ({ id, files, userId }) => {
-  // create queue for processing
-  // const queue = new Queue(1)
-  // add process to queue
-  // queue.add(() => _processing(id, files, userId))
-  _processing(id, files, userId)
+  // _processing(id, files, userId)
 }
 
-const _processing = (id, files) => {
+const _processing = (id, files, userId) => {
   // inserisce nella tabella processing l'id del processo e i file che lo compongono (filename)
   createProcessing({
     id,

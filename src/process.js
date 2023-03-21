@@ -9,7 +9,7 @@ const libDir = `${dir}/src/lib`
 console.log('libDir', libDir)
 // funzione che inizializza il processo di creazione del modello 3D
 const process = ({ id, files, userId }) => {
-  // _processing(id, files, userId)
+  _processing(id, files, userId)
 }
 
 const _processing = (id, files, userId) => {

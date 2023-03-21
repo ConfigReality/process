@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "local:start": "fastify start -l info app.js",
-    "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P app.js --port 3002"
+    "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P app.js --port 3002",
+    "update-types": "npx supabase gen types typescript --project-id \"babbshwgaemnqpeboequ\" > src/types/supabase.ts"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
     "@supabase/supabase-js": "^2.1.1",
     "async": "^3.2.4",
     "aws-sdk": "^2.1249.0",
+    "dotenv": "^16.0.3",
     "fastify": "^4.9.2",
     "fastify-plugin": "^4.3.0",
     "uuid": "^9.0.0"

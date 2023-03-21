@@ -1,6 +1,7 @@
 'use strict'
 
 const { exec } = require('child_process')
+const { supabase } = require('./client')
 const { updateProcessing, createProcessing } = require('./persist')
 const { Queue } = require('./queue')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
@@ -8,8 +9,10 @@ const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`
 console.log('libDir', libDir)
 // funzione che inizializza il processo di creazione del modello 3D
-const process = ({ id, files, userId }) => {
-  _processing(id, files, userId)
+const process = async ({ id, files, userId }) => {
+  // 1. inserisce nella tabella processing l'id del processo e i file che lo compongono (filename)
+  // 2. esecuzione del processo di creazione del modello 3D
+  // 3. conversione del modello 3D in formato usdz in formato obj e mtl e esportazione mesh
 }
 
 const _processing = (id, files, userId) => {

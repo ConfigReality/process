@@ -1,9 +1,7 @@
 'use strict'
 
 const { exec } = require('child_process')
-const { supabase } = require('./client')
 const { updateProcessing, createProcessing } = require('./persist')
-const { Queue } = require('./queue')
 const dir = __dirname.substring(0, __dirname.lastIndexOf('/'))
 const tmpDir = `${dir}/tmp`
 const libDir = `${dir}/src/lib`

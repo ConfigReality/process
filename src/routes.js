@@ -61,7 +61,9 @@ module.exports = fp(async function (fastify, opts) {
       }
       console.log(`process(${uuid})`)
       console.time('process')
-      process({ id: uuid, files: _, userId }) // process asynchronously
+      fastify.addTaskToQueue({ id: uuid, files: _, userId })
+      fastify.processQueue()
+      // process({ id: uuid, files: _, userId }) // process asynchronously
       reply.statusCode = 201
       return { upload: 'processing', id: uuid, count: _.length, files: _ }
     } catch (err) {

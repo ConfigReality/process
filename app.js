@@ -12,8 +12,12 @@ module.exports = async function (fastify, opts) {
   })
 
   fastify.get('/', async () => {
+    fastify.processQueue()
     return { hello: 'world' }
   })
 
+  // register queue to execute every time a file is uploaded
+  fastify.register(require('./src/queue-supabase'))
+  // register routes
   fastify.register(require('./src/routes'))
 }

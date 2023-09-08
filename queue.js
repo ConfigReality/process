@@ -1,59 +1,123 @@
-const async = require('async')
-const { spawn } = require('child_process')
+const { exec } = require('child_process')
+const CommandQueue = require('./queue')
 
-// Coda dei processi
-const queue = async.queue((task, callback) => {
-  console.log(`Esecuzione del comando: ${task.command}`)
-  const childProcess = spawn(task.command, task.args)
+const proxy = (param, obj) =>
+    new Proxy(obj, {
+        get: function (target, prop) {
+            return `${param} ${target[prop]}`
+        },
+    })
 
-  // Gestione degli eventi del processo
-  childProcess.stdout.on('data', data => {
-    console.log(`stdout: ${data}`)
-  })
+// "-d","medium", // -d specifies the detail
+const details = proxy('-d', {
+    preview: 'preview',
+    reduced: 'reduced',
+    medium: 'medium',
+    full: 'full',
+    raw: 'raw',
+})
 
-  childProcess.stderr.on('data', data => {
-    console.error(`stderr: ${data}`)
-  })
+// "-o","unordered", // -o specifies the sample ordering
+const orders = proxy('-o', {
+    unordered: 'unordered',
+    sequential: 'sequential',
+})
 
-  childProcess.on('close', code => {
-    console.log(`Il comando è terminato con il codice di uscita ${code}`)
-    // Aggiorniamo lo stato del processo nel database
-    // pool.query(
-    //   "UPDATE queue SET status = 'completed' WHERE id = $1",
-    //   [task.id],
-    //   (error, result) => {
-    //     if (error) console.error(error);
-    //     else console.log(`Processo "${task.command}" completato.`);
-    //     callback();
-    //   }
-    // );
-    callback()
-  })
-}, 1) // Impostiamo un limite di 1 processo alla volta
+// "-f","normal" // -f specifies the feature sensitivity
+const features = proxy('-f', {
+    normal: 'normal',
+    high: 'high',
+})
 
-// Funzione per aggiungere un nuovo processo alla coda
-const addProcessToQueue = (command, args) => {
-  // pool.query(
-  //   "INSERT INTO queue (command, args, status) VALUES ($1, $2, $3) RETURNING id",
-  //   [command, args, "pending"],
-  //   (error, result) => {
-  //     if (error) console.error(error);
-  //     else {
-  //       const id = result.rows[0].id;
-  queue.push({ command, args }, error => {
-    if (error) console.error(error)
-    else console.log(`Processo "${command}" completato.`)
-  })
-  //     }
-  //   }
-  // );
+const dir = __dirname
+const libDir = `${dir}/src/lib`
+const tmpDir = `${dir}/tmp`
+const imgDir = '/Users/salvatorelaspata/3DObject/francesco/'
+
+const c = (...args) => {
+    const [first, ...rest] = args
+    if (rest.length === 0) {
+        return Object.values(first)
+    } else {
+        return Object.values(first).reduce((acc, element) => {
+            return acc.concat(
+                c(...rest).map(combination => `${element} ${combination}`)
+            )
+        }, [])
+    }
 }
 
-// Esempio di utilizzo
-addProcessToQueue('ls', ['-l', '/'])
-addProcessToQueue('echo', ['Hello', 'World'])
-// In questo esempio, abbiamo creato una coda utilizzando la funzione async.queue. La coda è stata impostata in modo che possa eseguire un solo processo alla volta, in modo sequenziale.
-// Abbiamo quindi creato una funzione addProcessToQueue che aggiunge un nuovo processo alla coda. La funzione prende il comando da eseguire come primo argomento e un array di argomenti come secondo argomento. Questa funzione utilizza il metodo queue.push per aggiungere un nuovo processo alla coda.
-// Per gestire gli eventi del processo, abbiamo utilizzato i metodi childProcess.stdout.on, childProcess.stderr.on e childProcess.on. Questi metodi ci consentono di gestire la standard output e error del processo e di sapere quando il processo è terminato.
-// Infine, abbiamo eseguito un paio di esempi di utilizzo della funzione addProcessToQueue, passando i comandi ls e echo come esempio. Quando i processi sono completati, la funzione di callback viene chiamata con un eventuale errore e viene mostrato un messaggio a console per notificare che il processo è stato completato.
-// In questo modo, quando si aggiunge un nuovo processo alla coda, questo viene eseguito in modo sequenziale, uno dopo l'altro. Se altri processi vengono aggiunti alla coda durante l'esecuzione di un processo, questi vengono cumulati e eseguiti quando il processo corrente è completato.
+// const combinazioni = {
+//   details,
+//   orders,
+//   features,
+// }
+
+// console.log(c(combinazioni.details, combinazioni.orders, combinazioni.features))
+
+// create all combination of detail, order, feature
+const createCombination = function* (_details, _orders, _features) {
+    for (const key in _details) {
+        if (Object.hasOwnProperty.call(_details, key)) {
+            const detail = _details[key]
+            for (const key in _orders) {
+                if (Object.hasOwnProperty.call(_orders, key)) {
+                    const order = _orders[key]
+                    for (const key in _features) {
+                        if (Object.hasOwnProperty.call(_features, key)) {
+                            const feature = _features[key]
+                            yield new Promise((res, rej) =>
+                                exec(
+                                    `cd ${libDir} && ./HelloPhotogrammetry ${imgDir}/ ${tmpDir}/test/models/test2${`_${detail.split(' ')[1]
+                                    }_`}${`_${order.split(' ')[1]}_`}${`_${feature.split(' ')[1]
+                                    }`}.usdz ${detail} ${order} ${feature}`,
+                                    error => {
+                                        if (error) {
+                                            console.error(`exec error: ${error}`)
+                                            rej(error)
+                                            return
+                                        }
+                                        res('ok')
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+const createCombinationQueue = function (_details, _orders, _features) {
+    const queue = new CommandQueue(1, a => {
+        console.log('done', a)
+    })
+    for (const key in _details) {
+        if (Object.hasOwnProperty.call(_details, key)) {
+            const detail = _details[key]
+            for (const key in _orders) {
+                if (Object.hasOwnProperty.call(_orders, key)) {
+                    const order = _orders[key]
+                    for (const key in _features) {
+                        if (Object.hasOwnProperty.call(_features, key)) {
+                            const feature = _features[key]
+                            // add to queue
+                            queue.addTask(`${libDir}/HelloPhotogrammetry`, [
+                                `${imgDir}`,
+                                `${tmpDir}/test/models/test2${`_${detail.split(' ')[1]}_`}${`_${order.split(' ')[1]
+                                }_`}${`_${feature.split(' ')[1]}`}.usdz`,
+                                ...detail.split(' '),
+                                ...order.split(' '),
+                                ...feature.split(' '),
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+const unorderedOnly = (({ unordered }) => ({ unordered }))(orders)
+createCombinationQueue(details, unorderedOnly, features)

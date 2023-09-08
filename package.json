@@ -20,5 +20,8 @@
     "fastify": "^4.9.2",
     "fastify-plugin": "^4.3.0",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.3.1"
   }
 }

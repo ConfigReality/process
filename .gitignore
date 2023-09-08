@@ -2,3 +2,5 @@ node_modules
 tmp
 package-lock.json
 .env
+credentials.json
+token.json

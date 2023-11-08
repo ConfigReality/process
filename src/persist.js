@@ -7,7 +7,7 @@ const {
   supabase: { insertRow, updateRow, uploadFile },
 } = require('./client')
 const { walkSync, generate, walk } = require('./utils')
-const { AWS_S3_BUCKET, AWS_DYNAMO_DB } = process.env
+const { BUCKET, DB_TABLE } = process.env
 
 const _uploadDir = function ({ id, tableId, dirpath, s3, supabase }) {
   // console.log('uploading dir', dirpath)
@@ -15,9 +15,9 @@ const _uploadDir = function ({ id, tableId, dirpath, s3, supabase }) {
   //   console.log('Uploading file:', filePath)
   //   let bucketPath = filePath.substring(dirpath.length + 1)
   //   const data = await readFile(filePath)
-  //   s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+  //   s3 && putObject(id, BUCKET, DB_TABLE, bucketPath, data)
   //   if (supabase)
-  //     await uploadFile(tableId, AWS_S3_BUCKET, AWS_DYNAMO_DB, bucketPath, data)
+  //     await uploadFile(tableId, BUCKET, DB_TABLE, bucketPath, data)
   //   console.log('Uploaded file:', bucketPath)
   // })
   walk(dirpath).then(async files => {
@@ -26,12 +26,12 @@ const _uploadDir = function ({ id, tableId, dirpath, s3, supabase }) {
       // files.forEach(async ({ file, path }, i) => {
       for await (const { file, path } of files) {
         console.log('Uploading file:')
-        s3 && putObject(id, AWS_S3_BUCKET, AWS_DYNAMO_DB, path, await file)
+        s3 && putObject(id, BUCKET, DB_TABLE, path, await file)
         if (supabase)
           await uploadFile(
             tableId,
-            AWS_S3_BUCKET,
-            AWS_DYNAMO_DB,
+            BUCKET,
+            DB_TABLE,
             path,
             await file
           )
@@ -60,7 +60,7 @@ const createProcessing = async ({
     urlsS3: [],
     userId,
   }
-  s3 && putItem(AWS_DYNAMO_DB, _)
+  s3 && putItem(DB_TABLE, _)
   if (supabase) {
     delete _.id
     _['finished_at'] = _.finishedAt
@@ -69,7 +69,7 @@ const createProcessing = async ({
     delete _.startedAt
     _['models_url'] = _.urlsS3
     delete _.urlsS3
-    return insertRow(AWS_DYNAMO_DB, _)
+    return insertRow(DB_TABLE, _)
   }
 }
 
@@ -86,12 +86,12 @@ const updateProcessing = ({
     status: 'Processed',
     finishedAt: new Date().toISOString(),
   }
-  s3 && updateItem(AWS_DYNAMO_DB, _)
+  s3 && updateItem(DB_TABLE, _)
   if (supabase) {
     _.id = tableId
     _.finished_at = _.finishedAt
     delete _.finishedAt
-    updateRow(AWS_DYNAMO_DB, _)
+    updateRow(DB_TABLE, _)
   }
   // 2. retrieve and upload files to s3
   const dirpath = `${tmpDir}/${id}/models`

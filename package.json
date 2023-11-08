@@ -4,6 +4,10 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "dev": "concurrently --kill-others \"npm run start-realtime\" \"npm run start-process\"",
+    "start": "concurrently --kill-others \"npm run start-realtime\" \"npm run start-process\"",
+    "start-process": "node process.js",
+    "start-realtime": "node realtime.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "local:start": "fastify start -l info app.js",
     "local:dev": "fastify start -w --ignore-watch 'tmp' -l info -d -I 9222 -P app.js --port 3002"

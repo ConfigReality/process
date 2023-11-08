@@ -1,7 +1,13 @@
+const { createClient } = require('@supabase/supabase-js');
+const { exec } = require('child_process')
+require('dotenv').config();
+
 const queue = require('fastq')(worker, 1)
 
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-const { exec } = require('child_process')
 const dir = __dirname
 const libDir = `${dir}/src/lib`
 
@@ -18,7 +24,7 @@ const processor = ({ imgDir, outDir, filename, detail = 'medium', order = 'unord
     })
   )
 
-const worker = async ({ file_location, detail, ordering, feature }) => {
+async function worker ({ file_location, detail, ordering, feature }) {
   console.log('worker')
   try { await processor({ imgDir: file_location, outDir: file_location, filename: 'test', detail, order: ordering, feature }) }
   catch (error) { console.log(error) }

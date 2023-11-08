@@ -54,7 +54,7 @@ supabase
     {
       event: 'INSERT',
       schema: 'public',
-      table: 'Catalog',
+      table: 'Process',
     },
     handleRealtime
   )

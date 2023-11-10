@@ -1,5 +1,6 @@
 const { readdir, stat, readFile } = require('fs/promises')
 const path = require('path')
+const mime = require('mime-types')
 
 const walkSync = (currentDirPath, callback) => {
   readdir(currentDirPath).then(files => {
@@ -22,10 +23,13 @@ const walk = async (currentDirPath, callback) => {
   for await (const file of files) {
     const filepath = path.join(currentDirPath, file)
     const _stat = await stat(filepath)
+    const _path = path.extname(file);
+
     if (_stat.isFile())
       ret.push({
         file: readFile(filepath),
         filename: file,
+        contentType: mime.extension(_path),
         path: filepath.substring(currentDirPath.length + 1),
       })
     else if (_stat.isDirectory()) ret.push(...(await walk(filepath, callback)))

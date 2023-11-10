@@ -24,6 +24,7 @@
     "fastify": "^4.9.2",
     "fastify-plugin": "^4.3.0",
     "fastq": "^1.15.0",
+    "mime-types": "^2.1.35",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

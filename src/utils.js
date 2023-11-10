@@ -25,6 +25,7 @@ const walk = async (currentDirPath, callback) => {
     if (_stat.isFile())
       ret.push({
         file: readFile(filepath),
+        filename: file,
         path: filepath.substring(currentDirPath.length + 1),
       })
     else if (_stat.isDirectory()) ret.push(...(await walk(filepath, callback)))

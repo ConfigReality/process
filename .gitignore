@@ -5,3 +5,5 @@ package-lock.json
 credentials.json
 token.json
 test
+target
+3d

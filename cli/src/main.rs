@@ -82,8 +82,8 @@ fn main() {
                 .stderr(Stdio::inherit())
                 .spawn()
                 .unwrap();
-            
-                let status = cmd.wait();
+
+                let status = cmd.try_wait();
                 println!("Exited with status {:?}", status);
         },
         Err(_) => {

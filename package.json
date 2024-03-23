@@ -19,6 +19,7 @@
     "@fastify/cors": "^8.1.1",
     "@fastify/multipart": "^7.3.0",
     "@supabase/supabase-js": "^2.1.1",
+    "amqplib": "^0.10.3",
     "async": "^3.2.4",
     "aws-sdk": "^2.1249.0",
     "fastify": "^4.9.2",

@@ -7,15 +7,11 @@ const supabaseKey = process.env.SUPABASE_KEY;
 
 const client = createClient(supabaseUrl, supabaseKey);
 
-const channelB = client
-  .channel('table-db-changes')
-  .on(
-    'postgres_changes',
-    {
-      event: '*',
+const channel = client
+    .channel('postgresChangesChannel')
+    .on('postgres_changes', {
+      event: 'INSERT',
       schema: 'public',
-      table: 'Catalog',
-    },
-    (payload) => console.log('*****', payload)
-  )
-  .subscribe()
+      table: 'Process'
+    }, payload => console.log(payload))
+    .subscribe()

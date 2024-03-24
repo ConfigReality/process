@@ -17,14 +17,41 @@ amqp.connect(process.env.QUEUE_CONNECTION_STRING, function(error0, connection) {
       throw error1;
     }
     var queue = 'processing';
+    channel.assertQueue(queue, { durable: false });
 
-    channel.assertQueue(queue, {
-      durable: false
-    });
     console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", queue);
-    channel.consume(queue, async function(msg) {
-        console.log(" [x] Received %s", msg.content.toString());
-        // await supabaseClient.from('Process').delete().eq('id', msg.content.toString());
-    }, { noAck: false });
+    
+    const consumeMessage = function(){
+      channel.get(queue, {}, function(err, msg){
+        if (err) {
+          console.log(err);
+        } else {
+          if (msg) {
+            console.log(" [x] Received %s", msg.content.toString());
+            setTimeout(function() {
+              console.log("[x] Done", msg.content.toString());
+              channel.ack(msg);
+              consumeMessage();
+            }, 500);
+          } else {
+            console.log("No message in queue");
+            setTimeout(function() {
+              consumeMessage();
+            }, 5000);
+          }
+        }
+      });
+    }
+
+    consumeMessage();
+    // channel.consume(queue, function(msg) {
+    //     channel.prefetch(1);
+    //     console.log(" [x] Received %s", msg.content.toString());
+    //     // await supabaseClient.from('Process').delete().eq('id', msg.content.toString());
+    //     setTimeout(function() {
+    //       console.log("[x] Done", msg.content.toString());
+    //       channel.ack(msg);
+    //     }, 10000);
+    // }, { noAck: false });
   });
 });
